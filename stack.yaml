@@ -10,7 +10,7 @@
 #
 # resolver: lts-3.5
 # resolver: nightly-2015-09-21
-# resolver: ghc-7.10.2
+# resolver: ghc-8.4.3
 # resolver: ghcjs-0.1.0_ghc-7.10.2
 #
 # The location of a snapshot can be provided as a file or url. Stack assumes
@@ -18,7 +18,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-11.16
+resolver: nightly-2018-07-05
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -38,7 +38,7 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
-# extra-deps: []
+extra-deps: []
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
