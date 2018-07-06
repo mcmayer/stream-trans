@@ -21,7 +21,7 @@
 #define INLINE_FUSED INLINE PHASE_FUSED
 #define INLINE_INNER INLINE PHASE_INNER
 
-module Trans (
+module Data.Vector.Fusion.Stream.Monadic.Trans (
   Walk(..), done, skip, yield, get, return, (>>=), fmap, (<*>), pure,
   transformWith, dropWhile'
 ) where

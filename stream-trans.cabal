@@ -1,25 +1,39 @@
 name:                stream-trans
 version:             0.1.0.0
--- synopsis:
--- description:
+synopsis:            Monadic stream transformers for Data.Vector.Fusion.Stream.Monadic
+description:         Todo
 homepage:            https://github.com/mcmayer/stream-trans
 license:             MIT
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2018 Author name here
+author:              Markus Mayer
+maintainer:          mmayer@mayeranalytics.com
+copyright:           2018 Markus Mayer
 category:            Data, Data Structures
 build-type:          Simple
 extra-source-files:  README.md
+                     changelog
 cabal-version:       >=1.10
 
 library
-  hs-source-dirs:      Data/Vector/Fusion/Stream/Monadic
-  exposed-modules:     Trans
+  hs-source-dirs:      .
+  exposed-modules:     Data.Vector.Fusion.Stream.Monadic.Trans
   build-depends:       base >= 4.7 && < 5
-                     , vector
+                     , vector >= 0.2
+                     , ghc >= 8.4
   default-language:    Haskell2010
+  Ghc-Options:         -O2 -Wall
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/stream-trans
+  location: https://github.com/mcmayer/stream-trans
+
+Test-Suite test-stream-trans
+    type:             exitcode-stdio-1.0
+    main-is:          TestStreamTrans.hs
+    build-depends:    base
+                    , vector
+                    , bytestring
+                    , random
+                    , QuickCheck
+    default-language: Haskell2010
+    other-modules:    Data.Vector.Fusion.Stream.Monadic.Trans
