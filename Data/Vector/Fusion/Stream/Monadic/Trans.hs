@@ -22,17 +22,17 @@
 #define INLINE_INNER INLINE PHASE_INNER
 
 module Data.Vector.Fusion.Stream.Monadic.Trans (
-  Walk(..), done, skip, yield, get, return, (>>=), fmap, (<*>), pure,
-  transformWith, dropWhile'
+  Trans(..), done, skip, yield, get, return, (>>=), fmap, (<*>), pure,
+  (>>>), (>>:), dropWhile'
 ) where
 
 import           Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
 import qualified Data.Vector.Fusion.Stream.Monadic as S
 
-data Walk m a b = Monad m => Walk ( forall s. (s->m (Step s a)) -> s -> m (Step s b) )
+data Trans m a b = Monad m => Trans ( forall s. (s->m (Step s a)) -> s -> m (Step s b) )
 
-instance Functor (Walk m a) where
-    fmap f (Walk t) = Walk ( \step s -> fmap f <$> t step s )
+instance Functor (Trans m a) where
+    fmap f (Trans t) = Trans ( \step s -> fmap f <$> t step s )
     {-# INLINE_FUSED fmap #-}
 
 {-# INLINE_INNER untilNotSkip #-}
@@ -44,21 +44,21 @@ untilNotSkip step s = do
         Skip s'     -> untilNotSkip step s'
         Yield a' s' -> return $ Yield a' s'
 
-instance Monad m => Monad (Walk m a) where
-    return b = Walk (t b) where
+instance Monad m => Monad (Trans m a) where
+    return b = Trans (t b) where
         t b' _ s = return $ Yield b' s
     {-# INLINE_FUSED return #-}
-    Walk t >>= f =
-        Walk (\step s -> do
+    Trans t >>= f =
+        Trans (\step s -> do
             next <- t (untilNotSkip step) s
             case next of
                 Done        -> return Done
                 Skip _      -> error "Internal error."
-                Yield b' s' -> case f b' of Walk t'' -> t'' step s'
+                Yield b' s' -> case f b' of Trans t'' -> t'' step s'
         )
     {-# INLINE_INNER (>>=) #-}
 
-instance Monad m => Applicative (Walk m a) where
+instance Monad m => Applicative (Trans m a) where
     pure = return
     {-# INLINE_FUSED pure #-}
     mf <*> m = do
@@ -68,27 +68,31 @@ instance Monad m => Applicative (Walk m a) where
     {-# INLINE_FUSED (<*>) #-}
 
 {-# INLINE_FUSED yield #-}
-yield :: Monad m => b -> Walk m a b
+yield :: Monad m => b -> Trans m a b
 yield = return
 
 {-# INLINE_FUSED skip #-}
-skip :: Monad m => Walk m a b
-skip = Walk (\_ s->return $ Skip s)
+skip :: Monad m => Trans m a b
+skip = Trans (\_ s->return $ Skip s)
 
 {-# INLINE_FUSED done #-}
-done :: Monad m => Walk m a b
-done = Walk (\_ _-> return Done)
+done :: Monad m => Trans m a b
+done = Trans (\_ _-> return Done)
 
 {-# INLINE_FUSED get #-}
-get :: Monad m => Walk m a a
-get = Walk (\step s->step s)
+get :: Monad m => Trans m a a
+get = Trans (\step s->step s)
 
-{-# INLINE_FUSED transformWith #-}
-transformWith :: Monad m => Stream m a -> Walk m a b -> Stream m b
-transformWith (Stream step s) (Walk t) = Stream (t step) s
+{-# INLINE_FUSED (>>>) #-}
+(>>>) :: Monad m => Stream m a -> Trans m a b -> Stream m b
+(>>>) (Stream step s) (Trans t) = Stream (t step) s
+
+{-# INLINE_FUSED (>>:) #-}
+(>>:) :: Monad m => Stream m a -> (Stream m a -> b) -> b
+s >>: f = f s
 
 {-# INLINE_FUSED dropWhile' #-}
-dropWhile' :: Monad m => (a->Bool) -> Walk m a a
+dropWhile' :: Monad m => (a->Bool) -> Trans m a a
 dropWhile' p = do
     a <- get
     if p a
