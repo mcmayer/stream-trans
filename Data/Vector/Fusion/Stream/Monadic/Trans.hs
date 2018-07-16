@@ -27,8 +27,8 @@ module Data.Vector.Fusion.Stream.Monadic.Trans (
 ) where
 
 import           Data.Vector.Fusion.Stream.Monadic (Step (..), Stream (..))
-import qualified Data.Vector.Fusion.Stream.Monadic as S
 
+-- |This is the stream transformer
 data Trans m a b = Monad m => Trans ( forall s. (s->m (Step s a)) -> s -> m (Step s b) )
 
 instance Functor (Trans m a) where
