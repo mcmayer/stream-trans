@@ -19,11 +19,12 @@ import qualified Data.Vector.Fusion.Stream.Monadic       as S
 import           Data.Vector.Fusion.Stream.Monadic.Trans (get, (>>>))
 import           Data.Word8                              (Word8)
 
-
+-- |This is used in `mkBitstream`. The first `Word8` is the current byte,
+-- the second `Word8` is the remaining (unconsumed) bits - 1.
 data StepBitStr = StepBitStr BSL.ByteString !Word8 !Word8
 
-type Bitstream m = S.Stream m Bool
-type Bitstream' = S.Stream Identity Bool
+type Bitstream m = S.Stream m Bool          -- ^ A `Bitstream` is a `Stream` of `Bool`
+type Bitstream' = S.Stream Identity Bool    -- ^ Monad 'removed'
 
 {-# INLINE_FUSED mkBitstream #-}
 mkBitstream :: Monad m => BSL.ByteString -> Bitstream m
@@ -42,7 +43,10 @@ mkBitstream bs' = S.Stream step (StepBitStr bs' 0 0) where
 byteStreamToByteString :: Monad m => S.Stream m Word8 -> m BSL.ByteString
 byteStreamToByteString s = S.foldr BSL.cons mempty s
 
-{-# INLINE_FUSED bitstreamToBytestream #-}
+iterN :: Int -> (a->a) -> a -> a
+iterN n f = foldr (.) id (replicate n f)
+
+{-# INLINE_INNER bitstreamToBytestream #-}
 bitstreamToBytestream :: Monad m => Bitstream m -> S.Stream m Word8
 bitstreamToBytestream s = s >>> bitsToByte where
     bitsToByte = do

@@ -90,4 +90,5 @@ executable random-bits
                     , Data.Vector.Fusion.Stream.Monadic.Utils
                     , Data.Vector.Fusion.Stream.Monadic.Bitstream
                     , Data.Vector.Fusion.Stream.Stream
+    ghc-prof-options: -fprof-auto
 

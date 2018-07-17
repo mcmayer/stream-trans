@@ -56,7 +56,7 @@ instance Monad m => Monad (Trans m a) where
                 Skip _      -> error "Internal error."
                 Yield b' s' -> case f b' of Trans t'' -> t'' step s'
         )
-    {-# INLINE_INNER (>>=) #-}
+    {-# INLINE_FUSED (>>=) #-}
 
 instance Monad m => Applicative (Trans m a) where
     pure = return
