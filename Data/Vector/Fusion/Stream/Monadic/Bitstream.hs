@@ -1,4 +1,5 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP                       #-}
+{-# LANGUAGE ExistentialQuantification #-}
 
 #define PHASE_FUSED [1]
 #define PHASE_INNER [0]
@@ -43,12 +44,33 @@ mkBitstream bs' = S.Stream step (StepBitStr bs' 0 0) where
 byteStreamToByteString :: Monad m => S.Stream m Word8 -> m BSL.ByteString
 byteStreamToByteString s = S.foldr BSL.cons mempty s
 
-iterN :: Int -> (a->a) -> a -> a
-iterN n f = foldr (.) id (replicate n f)
+data Iter s = Iter !s !Word8 !Int
 
-{-# INLINE_INNER bitstreamToBytestream #-}
+{-# INLINE_FUSED readByte #-}
+readByte :: Monad m => (s -> m (S.Step s Bool)) -> (s -> m (S.Step s Word8))
+readByte step = stepw where
+    {-# INLINE_INNER stepw #-}
+    stepw s = do
+        Iter s' w' n' <- f step (Iter s 0 7)
+        return $ if n' == 0 then (Yield w' s') else Done
+        where
+            f :: Monad m => (s -> m (S.Step s Bool)) -> Iter s -> m (Iter s)
+            f step' (Iter s' w n) = do
+                stp <- step' s'
+                case stp of
+                    Done -> return (Iter s' w n)
+                    Skip s'' ->  f step' (Iter s'' w n)
+                    Yield b s'' -> if n == 0 then return (Iter s'' w' 0) else f step' (Iter s'' w' (n-1))
+                        where w' = w .|. shiftL (if b then 1 else 0) (7-n)
+            {-# INLINE_INNER f #-}
+
+{-# INLINE_FUSED bitstreamToBytestream #-}
 bitstreamToBytestream :: Monad m => Bitstream m -> S.Stream m Word8
-bitstreamToBytestream s = s >>> bitsToByte where
+bitstreamToBytestream (S.Stream step s0) = S.Stream (readByte step) s0 where
+
+{-# INLINE_INNER bitstreamToBytestream' #-}
+bitstreamToBytestream' :: Monad m => Bitstream m -> S.Stream m Word8
+bitstreamToBytestream' s = s >>> bitsToByte where
     bitsToByte = do
         let toW b = if b then 1::Word8 else 0
             getW = toW <$> get
@@ -65,7 +87,7 @@ bitstreamToBytestream s = s >>> bitsToByte where
 
 {-# INLINE_FUSED mkByteString #-}
 mkByteString :: Monad m => Bitstream m -> m BSL.ByteString
-mkByteString = byteStreamToByteString . bitstreamToBytestream
+mkByteString = byteStreamToByteString . bitstreamToBytestream'
 
 {-# INLINE_FUSED mkByteString' #-}
 mkByteString' :: Bitstream' -> BSL.ByteString

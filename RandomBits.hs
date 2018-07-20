@@ -1,3 +1,10 @@
+{-# LANGUAGE CPP #-}
+
+#define PHASE_FUSED [1]
+#define PHASE_INNER [0]
+#define INLINE_FUSED INLINE PHASE_FUSED
+#define INLINE_INNER INLINE PHASE_INNER
+
 module Main where
 
 import           Control.Monad                               (when)
@@ -21,39 +28,31 @@ type RandomBytestream = S.Stream Identity Word8
 {-# INLINE mkRandomBitstream #-}
 mkRandomBitstream :: Int -> StdGen -> RandomBitstream
 mkRandomBitstream len gen = S.Stream step (len,gen) where
+    {-# INLINE_INNER step #-}
     step (l, g) = do
-        -- let (b,g') = random g :: (Bool, StdGen)
-        let b = True
-            g' = g
+        let (b,g') = random g :: (Bool, StdGen)
         return $ if l == 0 then S.Done else S.Yield b (l-1, g')
 
 {-# INLINE mkRandomBytestream #-}
 mkRandomBytestream :: Int -> StdGen -> RandomBytestream
 mkRandomBytestream len gen = S.Stream step (len,gen) where
+    {-# INLINE_INNER step #-}
     step (l, g) = do
-        -- let (b,g') = random g :: (Bool, StdGen)
-        let b = 1 :: Word8
-            g' = g
-        return $ if l == 0 then S.Done else S.Yield b (l-1, g')
+        let (w, g') = random g :: (Word8, StdGen)
+        return $ if l == 0 then S.Done else S.Yield w (l-1, g')
 
 {-# INLINE byteStreamToByteString #-}
 byteStreamToByteString :: Monad m => S.Stream m Word8 -> m BSL.ByteString
 byteStreamToByteString s = S.foldr BSL.cons mempty s
 
-lazyRandomByteString :: Int -> StdGen -> BSL.ByteString
-lazyRandomByteString n g = fst3 $ iter (BSL.empty, n, g) where
-    fst3 (a, _, _) = a
-    iter (bs', n', g') =
-        if n' == 0 then (bs', 0, g')
-        else iter (w `BSL.cons` bs', n'-1, g'') where
-            (w, g'') = random g' :: (Word8, StdGen)
+data Iter = Iter !Int !StdGen
 
-lazyRandomByteString' :: Int -> StdGen -> BSL.ByteString
-lazyRandomByteString' n g = BSL.unfoldr f (n, g) where
-    f (n', g') =
-        if n' == 0 then Nothing
-        else Just (w, (n'-1, g'')) where
-            (w, g'') = random g' :: (Word8, StdGen)
+lazyRandomByteString :: Int -> StdGen -> BSL.ByteString
+lazyRandomByteString n g = BSL.unfoldr f (Iter n g) where
+    {-# INLINE_INNER f #-}
+    f (Iter n' g') | n' == 0 = Nothing
+                   | otherwise = Just (w, Iter (n'-1) g'') where
+                        (w, g'') = random g' :: (Word8, StdGen)
 
 main :: IO ()
 main = do
@@ -63,8 +62,8 @@ main = do
         exitFailure
     gen <- getStdGen
     let len = read (head args) :: Int
-        rs = mkRandomBytestream (8*len) gen
-    -- S.mkByteString rs >>= BSL.hPut stdout
-    let l = BSL.length $ lazyRandomByteString' len gen
-    print l
+        rs = mkRandomBitstream (8*len) gen
+    BSL.hPut stdout (S.mkByteString' rs)
+    --let l = lazyRandomByteString len gen
+    --BSL.putStr l
     exitSuccess
