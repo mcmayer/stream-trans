@@ -27,7 +27,7 @@ library
                      , bytestring
                      , word8
   default-language:    Haskell2010
-  Ghc-Options:         -O2 -fforce-recomp -optc "-funroll-loops" -fllvm -threaded -funbox-strict-fields -ddump-asm -ddump-simpl
+  Ghc-Options:         -O2 -fforce-recomp -optc "-funroll-loops" -fllvm -funbox-strict-fields -ddump-asm -ddump-simpl
 
 source-repository head
   type:     git
