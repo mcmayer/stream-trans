@@ -3,7 +3,7 @@ version:             0.1.0.0
 synopsis:            Monadic stream transformers for Data.Vector.Fusion.Stream.Monadic
 description:         Todo
 homepage:            https://github.com/mcmayer/stream-trans
-license:             MIT
+license:             BSD3
 license-file:        LICENSE
 author:              Markus Mayer
 maintainer:          mmayer@mayeranalytics.com
