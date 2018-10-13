@@ -1,6 +1,19 @@
 {-# LANGUAGE CPP                       #-}
 {-# LANGUAGE ExistentialQuantification #-}
 
+-- |
+-- Module      : Data.Vector.Fusion.Stream.Monadic.Bitstream
+-- Copyright   : (c) Markus Mayer
+-- License     : BSD-style
+--
+-- Maintainer  : Markus Mayer <mmayer@mayeranalytics>
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- Monadic stream combinator transformers: Bitstreams.
+--
+
+
 #define PHASE_FUSED [1]
 #define PHASE_INNER [0]
 #define INLINE_FUSED INLINE PHASE_FUSED
@@ -31,14 +44,14 @@ type Bitstream' = S.Stream Identity Bool    -- ^ Monad 'removed'
 mkBitstream :: Monad m => BSL.ByteString -> Bitstream m
 mkBitstream bs' = S.Stream step (StepBitStr bs' 0 0) where
     {-# INLINE_INNER step #-}
-    step (StepBitStr bs w n) | n==0 = case (BSL.uncons bs) of
-                            Nothing        -> return Done
-                            Just (w', bs'') -> return $
-                                Yield (w' .&. 1 == 1)
-                                        (StepBitStr bs'' (w' `shiftR` 1) 7)
-                       | otherwise = return $
-                                Yield (w .&. 1 == 1)
-                                        (StepBitStr bs (w `shiftR` 1) (n-1))
+    step (StepBitStr bs w n) | n==0 = case BSL.uncons bs of
+                                        Nothing        -> return Done
+                                        Just (w', bs'') -> return $
+                                            Yield (w' .&. 1 == 1)
+                                                    (StepBitStr bs'' (w' `shiftR` 1) 7)
+                             | otherwise = return $
+                                        Yield (w .&. 1 == 1)
+                                                (StepBitStr bs (w `shiftR` 1) (n-1))
 
 {-# INLINE_FUSED byteStreamToByteString #-}
 byteStreamToByteString :: Monad m => S.Stream m Word8 -> m BSL.ByteString
@@ -52,7 +65,7 @@ readByte step = stepw where
     {-# INLINE_INNER stepw #-}
     stepw s = do
         Iter s' w' n' <- f step (Iter s 0 7)
-        return $ if n' == 0 then (Yield w' s') else Done
+        return $ if n' == 0 then Yield w' s' else Done
         where
             f :: Monad m => (s -> m (S.Step s Bool)) -> Iter s -> m (Iter s)
             f step' (Iter s' w n) = do
@@ -66,7 +79,7 @@ readByte step = stepw where
 
 {-# INLINE_FUSED bitstreamToBytestream #-}
 bitstreamToBytestream :: Monad m => Bitstream m -> S.Stream m Word8
-bitstreamToBytestream (S.Stream step s0) = S.Stream (readByte step) s0 where
+bitstreamToBytestream (S.Stream step s0) = S.Stream (readByte step) s0
 
 {-# INLINE_INNER bitstreamToBytestream' #-}
 bitstreamToBytestream' :: Monad m => Bitstream m -> S.Stream m Word8

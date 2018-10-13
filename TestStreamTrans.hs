@@ -27,23 +27,23 @@ everySecondL (x:y:xs) = y : everySecondL xs;
 everySecondL _        = []
 
 test1 :: [Int] -> Bool
-test1 is = (s >>> everySecond >>: toList') == (everySecondL is) where
+test1 is = s >>> everySecond >>: toList' == everySecondL is where
     s = fromList' is
 
 test2 :: [Int] -> Bool
-test2 is = (s >>> everySecond >>> everySecond >>: toList') ==
-    ((everySecondL . everySecondL) is) where
+test2 is = s >>> everySecond >>> everySecond >>: toList' ==
+    (everySecondL . everySecondL) is where
         s = fromList' is
 
 fmap' :: Monad m => (a->b) -> Trans m a b
-fmap' f = get >>= (return.f)
+fmap' f = f <$> get
 
 testFmap' :: (Int->Int) -> [Int] -> Bool
-testFmap' f is = (fmap f is) == (s >>> (fmap' f) >>: toList') where
+testFmap' f is = fmap f is == s >>> fmap' f >>: toList' where
     s = fromList' is
 
 testFmap'2 :: (Int->Int) -> [Int] -> Bool
-testFmap'2 f is = (fmap f s) == (s >>> (fmap' f)) where
+testFmap'2 f is = fmap f s == s >>> fmap' f where
     s = fromList' is
 
 arbitraryStream :: Arbitrary a => Gen (S.Stream Gen a)
@@ -57,11 +57,11 @@ arbitraryStream =
                 return $ S.Yield a (k'-1)
 
 testTraversable :: [Int] -> Bool
-testTraversable is = is == (toList' s')
+testTraversable is = is == toList' s'
     where Just s' = traverse Just (fromList' is)
 
 testTraversable2 :: [Int] -> Bool
-testTraversable2 is = (traverse f is) == (toList' <$> traverse f (fromList' is))
+testTraversable2 is = traverse f is == (toList' <$> traverse f (fromList' is))
     where
         f i | i>0 = Just i
             | otherwise = Nothing
@@ -73,6 +73,6 @@ main = do
     quickCheck test2
     quickCheck $ testFmap' (*2)
     quickCheck $ testFmap'2 (*2)
-    quickCheck $ testTraversable
-    quickCheck $ testTraversable2
+    quickCheck testTraversable
+    quickCheck testTraversable2
 

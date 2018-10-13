@@ -13,8 +13,6 @@ import           Data.Vector.Fusion.Stream.Stream            (fromList',
 import qualified Data.Vector.Fusion.Stream.Stream            as S
 import           Data.Word8
 import           Test.QuickCheck
-import           Test.QuickCheck.Monadic                     (assert, monadicIO,
-                                                              run)
 
 instance Arbitrary BSL.ByteString where
     arbitrary = BSL.pack <$> (arbitrary :: Gen [Word8])

@@ -1,5 +1,18 @@
 {-# LANGUAGE CPP #-}
 
+-- |
+-- Module      : Data.Vector.Fusion.Stream.Monadic.Utils
+-- Copyright   : (c) Markus Mayer
+-- License     : BSD-style
+--
+-- Maintainer  : Markus Mayer <mmayer@mayeranalytics.com>
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- Monadic stream combinator transformers: Utilities
+--
+
+
 #define PHASE_FUSED [1]
 #define PHASE_INNER [0]
 #define INLINE_FUSED INLINE PHASE_FUSED

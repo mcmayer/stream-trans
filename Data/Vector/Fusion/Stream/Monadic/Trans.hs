@@ -63,8 +63,7 @@ instance Monad m => Applicative (Trans m a) where
     {-# INLINE_FUSED pure #-}
     mf <*> m = do
         f <- mf
-        x <- m
-        return (f x)
+        f <$> m
     {-# INLINE_FUSED (<*>) #-}
 
 {-# INLINE_FUSED yield #-}

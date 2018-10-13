@@ -3,6 +3,18 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
+-- |
+-- Module      : Data.Vector.Fusion.Stream.Monadic.Stream
+-- Copyright   : (c) Markus Mayer
+-- License     : BSD-style
+--
+-- Maintainer  : Markus Mayer <mmayer@mayeranalytics.com>
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-- Monadic stream combinator transformers: Define 'unmonadic' Stream.
+--
+
 #define PHASE_FUSED [1]
 #define PHASE_INNER [0]
 #define INLINE_FUSED INLINE PHASE_FUSED
@@ -13,17 +25,15 @@ module Data.Vector.Fusion.Stream.Stream (
     toList', fromList'
 ) where
 
-import           Control.Applicative
 import           Control.Monad.Identity
 import           Data.Vector.Fusion.Stream.Monadic       (Step (..))
 import qualified Data.Vector.Fusion.Stream.Monadic       as S
-import           Data.Vector.Fusion.Stream.Monadic.Trans
-import           Data.Vector.Fusion.Stream.Monadic.Utils
 
+-- |@Stream'@ is the 'unmonadic' version of @Stream@.
 type Stream' = S.Stream Identity
 
 instance Foldable Stream' where
-    foldMap f s = runIdentity $ S.foldl' (\a b -> a <> (f b)) mempty s
+    foldMap f s = runIdentity $ S.foldl' (\a b -> a <> f b) mempty s
 
 seqA :: (Applicative f) => Stream' (f a) -> f (Stream' a)
 seqA (S.Stream step init) = runIdentity $ do
