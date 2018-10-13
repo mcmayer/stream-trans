@@ -1,3 +1,5 @@
+SHELL:=$(shell echo $$SHELL)
+
 build:
 	stack build
 
@@ -18,6 +20,9 @@ clean:
 
 code:
 	stack build hoogle intero stylish-haskell hlint; \
-	zsh -c -i "code ."
+	$(SHELL) -c -i "code ."
 
-.PHONY: build test code clean
+haddock:
+	stack haddock
+
+.PHONY: build test random prof build-profile clean code haddock
