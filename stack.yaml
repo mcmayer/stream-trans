@@ -39,8 +39,6 @@ packages:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- git: https://github.com/janpath/intero.git
-  commit: c32d87a170495d106744c3f7275a9d24ed0e3e42
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
